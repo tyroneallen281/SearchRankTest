@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SearchRankDomain\SearchRankDomain.csproj" />
+    <ProjectReference Include="..\SearchRankUtilities\SearchRankUtilities.csproj" />
+  </ItemGroup>
+
+</Project>
