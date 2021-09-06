@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SearchRankService.Interfaces;
 using SearchRankService.Service;
+using System.Net;
 
 namespace SearchRankTest
 {
@@ -23,24 +24,20 @@ namespace SearchRankTest
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+           
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddHttpClient<ISearchClientService, SearchClientService>();
 
-            //services.AddSingleton<ISearchClientService, SearchClientService>();
             services.AddTransient<ISearchRankService, GoogleRankSevice>();
             services.AddTransient<ISearchRankService, BingRankSevice>();
 
-            
+            services.AddCors();
             services.AddResponseCompression(options =>
             {
                 options.Providers.Add<BrotliCompressionProvider>();
                 options.Providers.Add<GzipCompressionProvider>();
             });
-            // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration =>
-            {
-                configuration.RootPath = "SearchRank/build";
-            });
+           
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -59,8 +56,9 @@ namespace SearchRankTest
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            app.UseSpaStaticFiles();
-
+            app.UseCors(
+                 options => options.SetIsOriginAllowed(x => _ = true).AllowAnyMethod().AllowAnyHeader().AllowCredentials()
+             );
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
@@ -68,15 +66,6 @@ namespace SearchRankTest
                     template: "{controller}/{action=Index}/{id?}");
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "SearchRank";
-
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });
         }
     }
 }

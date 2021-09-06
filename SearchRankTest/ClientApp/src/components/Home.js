@@ -2,24 +2,69 @@ import React, { Component } from 'react';
 
 export class Home extends Component {
   static displayName = Home.name;
+    constructor(props) {
+        super(props);
+        this.state = { searchTerms: "land registry search", domain: "www.infotrack.co.uk", data: [], loading: true };
 
-  render () {
+    }
+    handleSearchTermsChange = (e) => {
+        this.setState({ searchTerms: e.target.value });
+    };
+    handleDomainChange = (e) => {
+        this.setState({ domain: e.target.value });
+    };
+    proccessRequest() {
+        const requestOptions = {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            
+        };
+        console.log(requestOptions);
+        fetch('https://localhost:44384/api/SearchRank/GetRanks?searchTerms=' + this.state.searchTerms + '&domain=' + this.state.domain , requestOptions)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                this.setState({ data: data, loading: false });
+            });
+    }
+
+    static renderResults(data) {
+        return (
+            <div>
+                {data.map(item =>
+                    <div>
+                        <hr />
+                        <h4>{item.searchProviderName}</h4>
+                       
+                        {item.ranks.map(rank =>
+                            <div>
+                                <b>{rank.term}</b> <small>Rank:{rank.rank}</small>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    render() {
+        let contents = this.state.loading
+            ? <p><em>Loading...</em></p>
+            : Home.renderResults(this.state.data);
+
+       
     return (
-      <div>
-        <h1>Hello, world!</h1>
-        <p>Welcome to your new single-page application, built with:</p>
-        <ul>
-          <li><a href='https://get.asp.net/'>ASP.NET Core</a> and <a href='https://msdn.microsoft.com/en-us/library/67ef8sbd.aspx'>C#</a> for cross-platform server-side code</li>
-          <li><a href='https://facebook.github.io/react/'>React</a> for client-side code</li>
-          <li><a href='http://getbootstrap.com/'>Bootstrap</a> for layout and styling</li>
-        </ul>
-        <p>To help you get started, we have also set up:</p>
-        <ul>
-          <li><strong>Client-side navigation</strong>. For example, click <em>Counter</em> then <em>Back</em> to return here.</li>
-          <li><strong>Development server integration</strong>. In development mode, the development server from <code>create-react-app</code> runs in the background automatically, so your client-side resources are dynamically built on demand and the page refreshes when you modify any file.</li>
-          <li><strong>Efficient production builds</strong>. In production mode, development-time features are disabled, and your <code>dotnet publish</code> configuration produces minified, efficiently bundled JavaScript files.</li>
-        </ul>
-        <p>The <code>ClientApp</code> subdirectory is a standard React application based on the <code>create-react-app</code> template. If you open a command prompt in that directory, you can run <code>npm</code> commands such as <code>npm test</code> or <code>npm install</code>.</p>
+        <div>
+            <h2>Search Rank Check</h2>
+            <label>Domain</label>
+            <input type="text" value={this.state.domain} onChange={this.handleDomainChange}/>
+            <label>Search Terms<small>( , seperated)</small></label>
+            <input type="text" value={this.state.searchTerms} onChange={this.handleSearchTermsChange}/>
+            <br />
+            <button onClick={() => this.proccessRequest()}>Process</button>
+            <br/><hr />
+            <h3>Search Rank Result</h3>
+            {contents}
       </div>
     );
   }

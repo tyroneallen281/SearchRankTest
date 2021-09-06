@@ -8,6 +8,7 @@ namespace SearchRankTest.Controllers
     using SearchRankDomain;
     using SearchRankService.Interfaces;
     using SearchRankService.Models;
+    using SearchRankUtilities;
 
     [Route("api/[controller]")]
     public class SearchRankController : Controller
@@ -20,17 +21,18 @@ namespace SearchRankTest.Controllers
         }
 
         [HttpGet("[action]")]
-        public async Task<ActionResult<List<RankResultModel>>> GetRanks(string searchTerms)
+        public async Task<ActionResult<List<RankResultModel>>> GetRanks(string searchTerms, string domain)
         {
-            if (string.IsNullOrEmpty(searchTerms))
+            if (string.IsNullOrEmpty(searchTerms) || string.IsNullOrEmpty(domain))
             {
-                BadRequest();
+                return BadRequest();
             }
-
+                
+            
             var result = new List<RankResultModel>();
             foreach (var searchProvider in _searchProviders)
             {
-                result.Add(await searchProvider.GetRanksAsync(searchTerms));
+                result.Add(await searchProvider.GetRanksAsync(searchTerms, domain.CleanUrl()));
             }
 
             return Ok(result);

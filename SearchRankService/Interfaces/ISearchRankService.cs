@@ -5,6 +5,6 @@
 
     public interface ISearchRankService
     {
-        Task<RankResultModel> GetRanksAsync(string searchTerms);
+        Task<RankResultModel> GetRanksAsync(string searchTerms, string domain);
     }
 }

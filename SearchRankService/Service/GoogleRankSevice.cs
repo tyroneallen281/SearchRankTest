@@ -4,6 +4,9 @@ using SearchRankService.Models;
 using SearchRankUtilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -12,33 +15,41 @@ namespace SearchRankService.Service
     public class GoogleRankSevice : ISearchRankService
     {
         public ISearchClientService _searchClient;
-        private const string _searchUrl = "https://www.google.co.uk/search?q={0}&start={1}";
+        private const string _searchUrl = "https://www.google.com/search?q={0}&num=100";
+        const string regexUrlPattern = @"(?<=<a href=\""\/url\?q=)(.*?)(?=&amp;)";
 
         public GoogleRankSevice(ISearchClientService searchClient)
         {
             _searchClient = searchClient;
         }
 
-        public async Task<RankResultModel> GetRanksAsync(string searchTerm)
+        public async Task<RankResultModel> GetRanksAsync(string searchTerms, string domain)
         {
             var rankResult = new RankResultModel("Google");
-            var terms = searchTerm.StringSplit();
+            var terms = searchTerms.StringSplit();
             Parallel.ForEach(terms, async term => 
             {
-                rankResult.Ranks.Add(await getTermRankAsync(term));
+                rankResult.Ranks.Add(await getTermRankAsync(term, domain));
             });
             return rankResult;
         }
 
-        private async Task<RankModel> getTermRankAsync(string searchTerm)
+        private async Task<RankModel> getTermRankAsync(string searchTerm, string domain)
         {
             var rank = 0;
-            var skip = 0;
-            while (rank == 0 && skip < 100)
+            try
             {
-                var clientData = await _searchClient.GetPageDataAsync(String.Format(_searchUrl, searchTerm, skip.ToString()));
-                rank = processPageData(clientData);
-                skip += 10;
+                 WebClient webclient = new WebClient();
+                string data = webclient.DownloadString(new Uri(string.Format(_searchUrl, searchTerm.Replace(" ", "+"))));
+                if (string.IsNullOrEmpty(data))
+                {
+                    throw new Exception("No Results Found");
+                }
+               rank = processPageData(data, domain);
+            }
+            catch (Exception ex)
+            {
+                rank = -1;
             }
 
             return new RankModel()
@@ -48,10 +59,20 @@ namespace SearchRankService.Service
             };
         }
 
-        private  int processPageData(XDocument data)
+       
+
+        private  int processPageData(string data, string domain)
         {
 
-            return 0;
+            Regex regex = new Regex(regexUrlPattern);
+            MatchCollection matches = regex.Matches(data);
+            var urls = matches.Cast<Match>().Select(m => m.Value.CleanUrl()).ToList();
+            if (!urls.Any())
+            {
+                return 0;
+            }
+
+            return urls.IndexOf(domain)+1;
         }
 
     }

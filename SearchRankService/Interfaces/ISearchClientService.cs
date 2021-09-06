@@ -10,6 +10,6 @@ namespace SearchRankService.Interfaces
 {
     public interface ISearchClientService
     {
-        Task<XDocument> GetPageDataAsync(string searchUrl);
+        Task<string> GetPageDataAsync(string searchUrl);
     }
 }
